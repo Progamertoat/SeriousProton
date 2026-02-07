@@ -972,6 +972,18 @@ class DataBuffer:
             self.data.append(((value >> 7) & 0x7F) | 0x80)
         self.data.append(value & 0x7F)
     
+    def write_uint32(self, value):
+        # VLQ unsigned encoding
+        if value >= (1 << 28):
+            self.data.append(((value >> 28) & 0x7F) | 0x80)
+        if value >= (1 << 21):
+            self.data.append(((value >> 21) & 0x7F) | 0x80)
+        if value >= (1 << 14):
+            self.data.append(((value >> 14) & 0x7F) | 0x80)
+        if value >= (1 << 7):
+            self.data.append(((value >> 7) & 0x7F) | 0x80)
+        self.data.append(value & 0x7F)
+    
     def write_int32(self, value):
         # VLQ signed encoding (zigzag)
         if value < 0:
@@ -995,6 +1007,16 @@ class DataBuffer:
         self.data.extend(encoded)
     
     def read_uint16(self):
+        result = 0
+        while True:
+            b = self.data[self.pos]
+            self.pos += 1
+            result = (result << 7) | (b & 0x7F)
+            if not (b & 0x80):
+                break
+        return result
+    
+    def read_uint32(self):
         result = 0
         while True:
             b = self.data[self.pos]
